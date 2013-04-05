@@ -1,0 +1,115 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+    <head>
+        <title>Imager User Interface</title>
+        <style>
+            body {
+                color: #000000;
+                background-color: #FFFFFF;
+                text-align: center;
+            }
+            .caption {
+                font-family: Verdana, Arial, Helvetica, sans-serif;
+                display: block;
+                float: left;
+                width: 150px;
+                padding: 0px;
+                margin: 0px;
+                clear: both;
+            }
+            .info {
+                font-family: Verdana, Arial, Helvetica, sans-serif;
+                display: block;
+                width: 100%;
+                padding: 0px;
+                margin: 0px;
+                clear: both;
+            }
+            .header {
+                text-align: center;
+            }
+            input {
+                width: 450px;
+                float: left;
+            }
+            #container {
+                display: block;
+                margin: auto;
+                padding: 0px;
+                text-align: left;
+                width: 600px;
+                background: white;
+            }
+            #render_frame {
+                width: 100%;
+                border: 0px;
+            }
+        </style>
+        <script language="javascript">
+            startTime = 0;
+            render_frame = null;
+
+            function doRender()
+            {
+                window.render_frame = document.getElementById("render_frame");
+                var url = document.getElementById("url").value;
+                var width = document.getElementById("width").value;
+                var height = document.getElementById("height").value;
+                var annotation = document.getElementById("annotation").value;
+                var useragent = document.getElementById("useragent").value;
+                var debug = document.getElementById("debug").value;
+                var nocache = document.getElementById("nocache").value;
+
+                var call = "http://localhost:8000/render?url="+encodeURIComponent(url);
+                if (width!="") call += "&width=" + width;
+                if (height!="") call += "&height=" + height;
+                if (annotation!="") call += "&annotation=" + encodeURIComponent(annotation);
+                if (useragent!="") call += "&ua=" + encodeURIComponent(useragent);
+                if (debug=="on") call += "&debug";
+                if (nocache=="on") call += "&nocache";
+
+                var request_div = document.getElementById("request");
+                request_div.innerHTML = '<a href="'+call+'">'+call+'</a>';
+
+                window.startTime = new Date().getTime();
+                window.render_frame.src = call; 
+            }
+ 
+            function stopTimer()
+            {
+                if (window.render_frame && window.render_frame.src != "")
+                { 
+                    var ms = new Date().getTime() - window.startTime;
+                    var load_time = document.getElementById("load_time");
+                    load_time.innerHTML = "Image loaded and rendered in "+ms+" ms.";
+                }
+            }
+        </script>  
+    </head>
+    <body>
+        <div id="container">
+            <h1 class="header">Imager User Interface</h1>
+            <span class="caption">URL: </span><input type="text" id="url"><br />
+            <span class="caption">Width: </span><input type="text" id="width"><br />
+            <span class="caption">Height: </span><input type="text" id="height"><br />
+            <span class="caption">Annotation: </span><input type="text" id="annotation"><br />
+            <span class="caption">User Agent: </span><input type="text" id="useragent"><br />
+            <span class="caption">Debugging: </span><select id="debug">
+                           <option value="off">Off</option>
+                           <option value="on">On</option>
+                       </select><br />
+            <span class="caption">Bypass Cache: </span><select id="nocache">
+                              <option value="off">Off</option>
+                              <option value="on">On</option>
+                          </select><br /><br />
+            <button id="render_button" onclick="doRender();">Render</button><br /><br />
+            <iframe class="info" id="render_frame" name="render_frame" onload="stopTimer();" src="">
+            </iframe><br /><br />
+            <!-- <input type="text" id="request" readonly="readonly"><br /> -->
+            <span class="info" id="load_time"></span><br />
+            <span class="info" id="load_timer1"></span><br />
+            <span class="info" id="request"></span><br />
+        </div>
+    </body>
+</html>
+
