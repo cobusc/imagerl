@@ -4,12 +4,14 @@ APP := imagerl
 .PHONY: deps
 
 all: deps
+	- ctags -R src/ deps/
 	@./rebar compile
 
 deps:
 	@./rebar get-deps
 
 clean:
+	- rm tags
 	@./rebar clean
 
 distclean: clean
