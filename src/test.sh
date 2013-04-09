@@ -19,11 +19,15 @@ read_stuff(Port) ->
     end.
                                                 
 main(_Args) ->
-    {ok, ImageAsBinary} = file:read_file("testimage.jpg"),
-    P = open_port({spawn, "/usr/bin/convert - -thumbnail '200x600' -"}, [stream, binary, use_stdio]),
-    %P = open_port({spawn, "/bin/cat -"}, [stream, binary, use_stdio]),
+    %{ok, BinaryData} = file:read_file("testimage.jpg"),
+    BinaryData = <<"Testing a very very very very very very very long string">>,
+    Size = erlang:size(BinaryData),
+    PortOpts = [stream, binary, use_stdio, exit_status, {env, [{"LD_PRELOAD", "./read_interposer.so"}]}],
+    %P = open_port({spawn_executable, "/usr/bin/convert"}, [{args, ["-", "-thumbnail", "200x600", "-"]} | PortOpts ]),
+    P = open_port({spawn, "/bin/cat -"}, PortOpts),
     %true = port_command(P, <<"Hello">>),
-    true = port_command(P, ImageAsBinary),
-    true = port_command(P, <<23>>),
+    true = port_command(P, <<Size:32/big>>),
+    true = port_command(P, BinaryData),
     %true = port_close(P),
+    
     read_stuff(P). 
