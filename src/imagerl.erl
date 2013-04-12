@@ -7,6 +7,18 @@
 -author('author <author@example.com>').
 -export([start/0, start_link/0, stop/0]).
 
+
+bootstrap() ->
+    ensure_started(inets),
+    ensure_started(crypto),
+    ensure_started(public_key),
+    ensure_started(ssl),
+    ensure_started(mochiweb),
+    application:set_env(webmachine, webmachine_logger_module, 
+                        webmachine_logger),
+    ensure_started(webmachine).
+
+
 ensure_started(App) ->
     case application:start(App) of
         ok ->
@@ -18,23 +30,13 @@ ensure_started(App) ->
 %% @spec start_link() -> {ok,Pid::pid()}
 %% @doc Starts the app for inclusion in a supervisor tree
 start_link() ->
-    ensure_started(inets),
-    ensure_started(crypto),
-    ensure_started(mochiweb),
-    application:set_env(webmachine, webmachine_logger_module, 
-                        webmachine_logger),
-    ensure_started(webmachine),
+    bootstrap(),
     imagerl_sup:start_link().
 
 %% @spec start() -> ok
 %% @doc Start the imagerl server.
 start() ->
-    ensure_started(inets),
-    ensure_started(crypto),
-    ensure_started(mochiweb),
-    application:set_env(webmachine, webmachine_logger_module, 
-                        webmachine_logger),
-    ensure_started(webmachine),
+    bootstrap(),
     application:start(imagerl).
 
 %% @spec stop() -> ok
@@ -43,6 +45,8 @@ stop() ->
     Res = application:stop(imagerl),
     application:stop(webmachine),
     application:stop(mochiweb),
+    application:stop(ssl),
     application:stop(crypto),
+    application:stop(public_key),
     application:stop(inets),
     Res.

@@ -1,6 +1,6 @@
 /* read() interposer.
  * Build and use this interposer as follows:
- * gcc -shared -fPIC -ldl -o read_interposer.so read_interposer.c
+ * gcc -nostartfiles -shared -fPIC -o read_interposer.so read_interposer.c -ldl
  * export LD_PRELOAD=$cwd/read_interposer.so
  * Run the app
  * unset LD_PRELOAD
@@ -13,8 +13,19 @@
 #include <assert.h>
 #include <arpa/inet.h>
 
+void _init()
+{
+    printf("Loaded library...~n");
+}
+
+void _fini()
+{
+    printf("Unloaded library...~n");
+}
+
 ssize_t read(int fd, void *buf, size_t count)
 {
+    printf("Read %d, %p, %u\n", fd, buf, count);
     static ssize_t (*func)(int , void*, size_t)=NULL;
     size_t result=-1;
 
@@ -27,7 +38,7 @@ ssize_t read(int fd, void *buf, size_t count)
     if (0==fd)
     {
         static uint32_t netlong = 0;
-        static int32_t expectedBytes = 0;
+        static uint32_t expectedBytes = 0;
         static ssize_t readSoFar = 0;
 
         if (0 == netlong) // We have not read the length
@@ -37,7 +48,7 @@ ssize_t read(int fd, void *buf, size_t count)
             assert(4 == r);
             // Convert to host byte order
             expectedBytes = ntohl(netlong);
-//            printf("Expecting %u bytes\n", expectedBytes);
+            printf("Expecting %u bytes\n", expectedBytes);
         }
 
         if (readSoFar < expectedBytes)
@@ -49,10 +60,12 @@ ssize_t read(int fd, void *buf, size_t count)
             result = func(fd, buf, numToRead);
             if (0 < result)
                 readSoFar += result;
+
+            printf("Read %u\n", result);
         }
         else
         {
-%            close(fd);
+//            close(fd);
             result = 0;
         }
     }

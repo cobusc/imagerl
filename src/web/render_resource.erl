@@ -9,8 +9,7 @@
         ]).
 
 -include_lib("webmachine/include/webmachine.hrl").
-
--type proplist(A, B) :: list({A, B}).
+-include("imagerl.hrl").
 
 init(Config) ->
     {ok, Config}.
@@ -59,19 +58,6 @@ content_types_provided(ReqData, Context) ->
 allowed_methods(ReqData, Context) ->
     {['GET'], ReqData, Context}.
 
-
--record(renderReq, {
-    url :: string(),
-    width = 0 :: non_neg_integer() | 'wurfl',
-    height = 0 :: non_neg_integer() | 'wurfl',
-    noCache = false :: boolean(),
-    format :: string(),
-    debug = false :: boolean(),
-    annotation :: string(),
-    userAgent :: string()
-}).
-
-
 %%
 %% @doc Check if the request parameters are correct and complete
 %%
@@ -103,8 +89,8 @@ malformed_request(ReqData, Ctx) ->
 -spec to_png(ReqData::#wm_reqdata{}, RenderReq::#renderReq{}) -> 
     {Body::iolist(), ReqData::#wm_reqdata{}, Record::#renderReq{}}.
 
-to_png(ReqData, RenderReq = #renderReq{url=Url}) ->
-    {ok,{{_,200,"OK"}, _Headers, Body}} = httpc:request(binary_to_list(Url)),
+to_png(ReqData, RenderReq) ->
+    {ok, Body} = scratch:do_everything(RenderReq), 
     %% @todo Cater for different types of images
     {Body, ReqData, RenderReq}.
 
@@ -200,15 +186,15 @@ parse_option({"height", V}, {Rec, ErrorList}) ->
             end
     end;
 
-parse_option({"noCache", V}, {Rec, ErrorList}) ->
+parse_option({"nocache", V}, {Rec, ErrorList}) ->
     case V of
-        undefined -> {Rec#renderReq{noCache=true}, ErrorList};
-        _ -> {Rec, ["noCache is a flag and cannot have a value" | ErrorList]}
+        "" -> {Rec#renderReq{noCache=true}, ErrorList};
+        _ -> {Rec, ["nocache is a flag and cannot have a value" | ErrorList]}
     end;
 
 parse_option({"debug", V}, {Rec, ErrorList}) ->
     case V of
-        undefined -> {Rec#renderReq{debug=true}, ErrorList};
+        "" -> {Rec#renderReq{debug=true}, ErrorList};
         _ -> {Rec, ["debug is a flag and cannot have a value" | ErrorList]}
     end;
 

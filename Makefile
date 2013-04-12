@@ -21,4 +21,7 @@ docs:
 	@erl -noshell -run edoc_run application '$(APP)' '"."' '[]'
 
 test: all
-	@./rebar skip_deps=true eunit 
+	@./rebar skip_deps=true eunit
+
+release: all
+	@./rebar --force generate

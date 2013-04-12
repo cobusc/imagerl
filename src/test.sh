@@ -20,14 +20,21 @@ read_stuff(Port) ->
                                                 
 main(_Args) ->
     %{ok, BinaryData} = file:read_file("testimage.jpg"),
-    BinaryData = <<"Testing a very very very very very very very long string">>,
+    BinaryData = <<"Testing a very very very very very very very long string\n">>,
     Size = erlang:size(BinaryData),
-    PortOpts = [stream, binary, use_stdio, exit_status, {env, [{"LD_PRELOAD", "./read_interposer.so"}]}],
+    io:format("Payload = ~B bytes~n", [Size]),
+    %PortOpts = [{packet, 4}, binary, use_stdio, exit_status, {env, [{"LD_PRELOAD", "./read_interposer.so"}]}],
     %P = open_port({spawn_executable, "/usr/bin/convert"}, [{args, ["-", "-thumbnail", "200x600", "-"]} | PortOpts ]),
-    P = open_port({spawn, "/bin/cat -"}, PortOpts),
-    %true = port_command(P, <<"Hello">>),
-    true = port_command(P, <<Size:32/big>>),
+    %P = open_port({spawn, "/usr/bin/convert - -thumbnail 200x600 /tmp/test.foo"}, PortOpts),
+    P = open_port({spawn, "/bin/echo  > /tmp/test.foo"}, %"strace /usr/bin/hexdump -C > /tmp/test.foo"}, 
+                   [{packet, 4}, 
+                    binary, 
+                    use_stdio, 
+                    exit_status, 
+                    {env, [{"LD_PRELOAD", "./read_interposer.so"}]}]),
+
     true = port_command(P, BinaryData),
+    %true = port_command(P, <<Size:32/big, BinaryData/binary>>),
     %true = port_close(P),
     
     read_stuff(P). 

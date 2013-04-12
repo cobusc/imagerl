@@ -1,7 +1,8 @@
-imagerl
-=======
+# imagerl [![Build Status](https://travis-ci.org/cobusc/imagerl.png?branch=master)](https://travis-ci.org/cobusc/imagerl)
 
 Image renderer and cacher in Erlang
+
+Todo list:
 
 Some notes from the Imagick website relating to geometry specifications...
 
@@ -20,13 +21,13 @@ Some notes from the Imagick website relating to geometry specifications...
 </table>
 
 
-The `convert` utility works fine with piped input and output, for example:
+The `convert` utility works fine with piped input and output in the shell, for example:
 
 ```bash
 cat $some_img_file | convert - -thumbnail '200x600!' - | display
 ```
 
-Implement Erlang port to do the heavy lifting (since Erlang lacks ImageMagick wrappers ;) )...
+Try to use Implement Erlang port to do the heavy lifting...
 
 ```erlang
 P = open_port({spawn, "/usr/bin/convert - -thumbnail '200x600!' -"}, [stream, binary]).
@@ -34,6 +35,5 @@ true = port_command(P, ImageAsBinary).
 % Read response... {data, ConvertedImageAsBinary}
 true = port_close(P).
 ```
-
-[![Build Status](https://travis-ci.org/cobusc/imagerl.png?branch=master)](https://travis-ci.org/cobusc/imagerl)
+...unfortunately it is not as easy as that.
 
