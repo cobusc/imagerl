@@ -35,4 +35,5 @@ true = port_command(P, ImageAsBinary).
 true = port_close(P).
 ```
 
+[![Build Status](https://travis-ci.org/cobusc/imagerl.png?branch=master)](https://travis-ci.org/cobusc/imagerl)
 
