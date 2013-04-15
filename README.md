@@ -30,9 +30,13 @@ cat $some_img_file | convert - -thumbnail '200x600!' - | display
 Try to use Implement Erlang port to do the heavy lifting...
 
 ```erlang
+{ok, ImageAsBinary} = file:read_file("testimage.jpg"),
 P = open_port({spawn, "/usr/bin/convert - -thumbnail '200x600!' -"}, [stream, binary]).
 true = port_command(P, ImageAsBinary).
 % Read response... {data, ConvertedImageAsBinary}
+receive
+    {data, ConvertedImageAsBinary} -> %do_something 
+end,
 true = port_close(P).
 ```
 ...unfortunately it is not as easy as that.

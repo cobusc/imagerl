@@ -90,9 +90,9 @@ malformed_request(ReqData, Ctx) ->
     {Body::iolist(), ReqData::#wm_reqdata{}, Record::#renderReq{}}.
 
 to_png(ReqData, RenderReq) ->
-    {ok, Body} = scratch:do_everything(RenderReq), 
+    {ok, Data} = scratch:do_everything(RenderReq),
     %% @todo Cater for different types of images
-    {Body, ReqData, RenderReq}.
+    {Data, ReqData, RenderReq}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

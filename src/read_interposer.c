@@ -39,7 +39,7 @@ ssize_t read(int fd, void *buf, size_t count)
     {
         static uint32_t netlong = 0;
         static uint32_t expectedBytes = 0;
-        static ssize_t readSoFar = 0;
+        static size_t readSoFar = 0;
 
         if (0 == netlong) // We have not read the length
         {

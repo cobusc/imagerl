@@ -1,11 +1,6 @@
-%% @author author <author@example.com>
-%% @copyright YYYY author.
-
 %% @doc Supervisor for the imagerl application.
 
 -module(imagerl_sup).
--author('author <author@example.com>').
-
 -behaviour(supervisor).
 
 %% External exports
@@ -13,6 +8,8 @@
 
 %% supervisor callbacks
 -export([init/1]).
+
+-include("imagerl.hrl").
 
 %% @spec start_link() -> ServerRet
 %% @doc API for starting the supervisor.
@@ -58,6 +55,12 @@ init([]) ->
            {webmachine_mochiweb, start, [WebConfig]},
            permanent, 5000, worker, [mochiweb_socket_server]},
     Processes = [Web],
+
+    % ETS cache creation
+    EtsOptions = [set, public, named_table], 
+    ?RENDERED_IMAGE_CACHE = ets:new(?RENDERED_IMAGE_CACHE, EtsOptions),
+    ?SOURCE_IMAGE_CACHE = ets:new(?SOURCE_IMAGE_CACHE, EtsOptions),
+
     {ok, { {one_for_one, 10, 10}, Processes} }.
 
 %%

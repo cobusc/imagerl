@@ -1,4 +1,7 @@
 
+-define(RENDERED_IMAGE_CACHE, rendered_image_cache).
+-define(SOURCE_IMAGE_CACHE, source_image_cache).
+
 -type proplist(A, B) :: list({A, B}).
 
 -record(renderReq, {
