@@ -11,7 +11,7 @@ deps:
 	@./rebar get-deps
 
 clean:
-	- rm tags
+	- rm -f tags
 	@./rebar clean
 
 distclean: clean
