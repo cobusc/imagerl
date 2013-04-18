@@ -1,8 +1,56 @@
 # imagerl [![Build Status](https://travis-ci.org/cobusc/imagerl.png?branch=master)](https://travis-ci.org/cobusc/imagerl)
 
-Image renderer and cacher in Erlang
+Image renderer and cacher in Erlang.
 
-Todo list:
+IMPORTANT: This appliaction is still a work in progress!
+
+Quick usage guide
+=================
+
+* Use the imager to serve an arbitrary image located at the specified URL. If the image is located at "http://www.google.co.za/images/srpr/logo3w.png", make the following call:
+
+     http://localhost:8000/render?url=http%3A%2F%2Fwww.google.co.za%2Fimages%2Fsrpr%2Flogo3w.png
+
+The image will be retrieved, cached and served the first time it is request. Thereafter it will simply be served from the cache.
+
+* If you require the image to have a restricted width or height, it can be specified.
+
+     http://localhost:8000/render?url=http%3A%2F%2Fwww.google.co.za%2Fimages%2Fsrpr%2Flogo3w.png&width=100
+or
+
+     http://localhost:8000/render?url=http%3A%2F%2Fwww.google.co.za%2Fimages%2Fsrpr%2Flogo3w.png&height=100
+
+The aspect ratio will be preserved in this case.
+
+* If you need to resize the image to specific dimensions, specify BOTH the width and the height:
+
+     http://localhost:8000/render?url=http%3A%2F%2Fwww.google.co.za%2Fimages%2Fsrpr%2Flogo3w.png&width=100&height=100
+
+* The image format that is served can be specified. For instance, if one wants the previous example to be served as a JPG file, you simply add a "format=<type>" part to the query.
+
+     http://localhost:8000/render?url=http%3A%2F%2Fwww.google.co.za%2Fimages%2Fsrpr%2Flogo3w.png&width=100&height=100&format=jpg
+
+* Text can be annotated across the image by adding "annotation=<text>", e.g.
+
+     http://localhost:8000/render?url=http%3A%2F%2Fwww.google.co.za%2Fimages%2Fsrpr%2Flogo3w.png&annotation=SAMPLE
+
+
+For debugging purposes the following additional arguments have been exposed:
+* nocache - Forces the imager to retrieve the specified image from the source and repopulate the cached copy, rather than use the cached copy.
+* debug - Enables detailed debug logging for the request.
+
+
+User interface
+==============
+
+A graphical user interface is available at
+
+    http://localhost:8000/ui
+
+
+
+Notes to self...
+================
 
 Some notes from the Imagick website relating to geometry specifications...
 
