@@ -2,7 +2,7 @@
 {application, imagerl,
  [
   {description, "imagerl"},
-  {vsn, "1"},
+  {vsn, "0.0.1"},
   {modules, []},
   {registered, []},
   {applications, [
