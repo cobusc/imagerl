@@ -49,17 +49,16 @@ init([]) ->
     WebConfig = [
                  {ip, Ip},
                  {port, Port},
-                 {log_dir, "priv/log"},
+                 {log_dir, "log"},
                  {dispatch, Dispatch}],
     Web = {webmachine_mochiweb,
            {webmachine_mochiweb, start, [WebConfig]},
            permanent, 5000, worker, [mochiweb_socket_server]},
     Processes = [Web],
 
-    % ETS cache creation
-    EtsOptions = [set, public, named_table], 
-    ?RENDERED_IMAGE_CACHE = ets:new(?RENDERED_IMAGE_CACHE, EtsOptions),
-    ?SOURCE_IMAGE_CACHE = ets:new(?SOURCE_IMAGE_CACHE, EtsOptions),
+    % Cache creation
+    true = image_cache:new(?RENDERED_IMAGE_CACHE),
+    true = image_cache:new(?SOURCE_IMAGE_CACHE),
 
     {ok, { {one_for_one, 10, 10}, Processes} }.
 

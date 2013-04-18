@@ -4,7 +4,7 @@ APP := imagerl
 .PHONY: deps
 
 all: deps
-	- ctags -R src/ deps/
+	- ctags -R src/ deps/ include/
 	@./rebar compile
 
 deps:

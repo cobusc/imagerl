@@ -18,13 +18,13 @@ wurfl_lookup(UserAgent, WurflPath) ->
 compute_from_source(Req) ->
     Key = keygen:source_image_key(Req#renderReq.url),
     Data =
-    case ets:lookup(?SOURCE_IMAGE_CACHE, Key) of
-        [{Key, CachedValue}] -> 
-            CachedValue;
-        [] ->
+    case image_cache:lookup(?SOURCE_IMAGE_CACHE, Key) of
+        undefined ->
             {ok,{{_,200,"OK"}, _Headers, Body}} = httpc:request(binary_to_list(Req#renderReq.url)),
-            ets:insert(?SOURCE_IMAGE_CACHE, {Key, Body}),
-            Body
+            image_cache:insert(?SOURCE_IMAGE_CACHE, Key, Body),
+            Body;
+        CachedValue ->
+            CachedValue
     end,
 
     %% @todo Obviously this is highly inefficient. Will be optimised.    
@@ -43,12 +43,12 @@ compute_from_source(Req) ->
 do_everything(RenderReq) ->
     Key = keygen:rendered_image_key(RenderReq),
     Data = 
-    case ets:lookup(?RENDERED_IMAGE_CACHE, Key) of
-        [{Key, CachedValue}] -> 
-            CachedValue;
-        [] -> 
+    case image_cache:lookup(?RENDERED_IMAGE_CACHE, Key) of
+        undefined -> 
             {ok, ComputedValue} = compute_from_source(RenderReq),
-            ets:insert(?RENDERED_IMAGE_CACHE, {Key, ComputedValue}),
-            ComputedValue
+            image_cache:insert(?RENDERED_IMAGE_CACHE, Key, ComputedValue),
+            ComputedValue;
+        CachedValue -> 
+            CachedValue
     end,
     {ok, Data}.

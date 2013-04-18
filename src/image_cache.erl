@@ -16,7 +16,7 @@
 
 new(CacheName) ->
     % @todo Start associated stats collector
-    CacheName == ets:create(CacheName, [set, public, named_table]).
+    CacheName == ets:new(CacheName, [set, public, named_table, {keypos, #image_cache_entry.key}]).
 
 %%
 %% @doc Insert the data associated with the key in the specified cache
@@ -40,9 +40,11 @@ lookup(CacheName, Key) ->
     case ets:lookup(CacheName, Key) of
         [] -> 
             % @todo Update miss counter here via async call to stats collector
+            error_logger:info_msg("~p miss ~s~n", [CacheName, keygen:to_hex(Key)]),
             undefined;
-        [#image_cache_entry{data=Data}] -> 
+        [#image_cache_entry{data=Data, created_at=CreatedAt}] -> 
             % @todo Update hit counter here via async call to stats collector
+            error_logger:info_msg("~p hit ~s (~1024p)~n", [CacheName, keygen:to_hex(Key), CreatedAt]),
             Data
     end.
 
