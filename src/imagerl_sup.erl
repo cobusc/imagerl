@@ -57,8 +57,8 @@ init([]) ->
     Processes = [Web],
 
     % Cache creation
-    true = image_cache:new(?RENDERED_IMAGE_CACHE),
-    true = image_cache:new(?SOURCE_IMAGE_CACHE),
+    true = imagerl_cache:new(?IMAGE_CACHE),
+    true = imagerl_cache:new(?WURFL_CACHE),
 
     {ok, { {one_for_one, 10, 10}, Processes} }.
 

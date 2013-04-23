@@ -29,13 +29,22 @@ wurfl_lookup(UserAgent, WurflPath) ->
 
 
 rewrite_wurfl_values(Req) ->
-    % Try to obtain WURFL values, with fallback strategy if it fails
-    {Width, Height} =
-    case catch wurfl_lookup(Req#renderReq.userAgent, "http://localhost/") of
-        {ok, {W,H}} ->
-            {W, H};
-        _ ->
-            {0, 0}
+    Key = keygen:wurfl_ua_key(Req#renderReq.userAgent),
+
+    % @todo Code below needs refactoring
+    {Width, Height} = 
+    case imagerl_cache:lookup(?WURFL_CACHE, Key) of
+        undefined ->
+	    % Try to obtain WURFL values, with fallback strategy if it fails
+	    case catch wurfl_lookup(Req#renderReq.userAgent, "http://localhost/") of
+		{ok, Result} ->
+                    imagerl_cache:insert(?WURFL_CACHE, Key, Result),
+		    Result;
+		_ ->
+		  {0, 0}
+	    end;
+        CachedValue ->
+            CachedValue
     end,
 
     WidthSubstitutedReq =
@@ -73,10 +82,11 @@ get_command_params(W,H) ->
 compute_from_source(Req) ->
     Key = keygen:source_image_key(Req#renderReq.url),
     SourceImage =
-    case image_cache:lookup(?SOURCE_IMAGE_CACHE, Key) of
+    case imagerl_cache:lookup(?IMAGE_CACHE, Key) of
         undefined ->
+            % @todo Have to build in connect timeout and connection timeout here.
             {ok,{{_,200,"OK"}, _Headers, Body}} = httpc:request(binary_to_list(Req#renderReq.url)),
-            image_cache:insert(?SOURCE_IMAGE_CACHE, Key, Body),
+            imagerl_cache:insert(?IMAGE_CACHE, Key, Body),
             Body;
         CachedValue ->
             CachedValue
@@ -104,10 +114,10 @@ render(#renderReq{height=wurfl}=Req) ->
 render(RenderReq) ->
     Key = keygen:rendered_image_key(RenderReq),
     Data =
-    case image_cache:lookup(?RENDERED_IMAGE_CACHE, Key) of
+    case imagerl_cache:lookup(?IMAGE_CACHE, Key) of
         undefined ->
             {ok, ComputedValue} = compute_from_source(RenderReq),
-            image_cache:insert(?RENDERED_IMAGE_CACHE, Key, ComputedValue),
+            imagerl_cache:insert(?IMAGE_CACHE, Key, ComputedValue),
             ComputedValue;
         CachedValue ->
             CachedValue

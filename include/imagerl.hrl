@@ -1,6 +1,6 @@
 
--define(RENDERED_IMAGE_CACHE, rendered_image_cache).
--define(SOURCE_IMAGE_CACHE, source_image_cache).
+-define(IMAGE_CACHE, image_cache).
+-define(WURFL_CACHE, wurfl_cache).
 
 -type proplist(A, B) :: list({A, B}).
 

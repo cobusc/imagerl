@@ -2,30 +2,38 @@
 
 -export([source_image_key/1,
          rendered_image_key/1,
+         wurfl_ua_key/1,
          to_hex/1]).
 -include("imagerl.hrl").
 
 
 %%
-%% @doc Generate a source image key based on its URL
+%% @doc Generate an image cache key based on the source URL
 %%
-
 -spec source_image_key(Url::binary()) -> binary().
 
-source_image_key(Url) ->
-    crypto:sha(Url).
-
+source_image_key(Url)
+when is_binary(Url) ->
+    crypto:sha256(Url).
 
 %%
-%% @doc Generate a render image key based on the rendering parameters
+%% @doc Generate an image cache key based on the rendering parameters
 %%
-
 -spec rendered_image_key(RenderReq::#renderReq{}) -> binary().
 
 rendered_image_key(#renderReq{url=U,width=W,height=H,format=F,annotation=A}) ->
 %    HashData = <<$u, U/binary, $w, W/integer, $h, H/integer, $f, F/binary, $a, A/binary>>,
     HashData = io_lib:format("u~sw~Bh~Bf~pa~p", [U, W, H, F, A]),
-    crypto:sha(HashData).
+    crypto:sha256(HashData).
+
+%%
+%% @doc Generate a WURFL cache key based on the User Agent string
+%%
+-spec wurfl_ua_key(UserAgent::binary()) -> binary().
+
+wurfl_ua_key(UserAgent)
+when is_binary(UserAgent) ->
+    crypto:sha256(UserAgent).
 
 %%
 %% @doc Return the hexadecimal representation of the key

@@ -1,8 +1,7 @@
-%% Use ets:info(TableName) to retrieve (1) number of keys [{size, xxx}] and (2) memory usage [{memory, words}].
--module(image_cache).
+-module(imagerl_cache).
 -export([new/1, insert/3, lookup/2, delete/2, stats/1]).
 
--record(image_cache_entry, 
+-record(cache_entry, 
     {
         key        :: binary(), 
         data       :: binary(),
@@ -16,7 +15,7 @@
 
 new(CacheName) ->
     % @todo Start associated stats collector
-    CacheName == ets:new(CacheName, [set, public, named_table, {keypos, #image_cache_entry.key}]).
+    CacheName == ets:new(CacheName, [set, public, named_table, {keypos, #cache_entry.key}]).
 
 %%
 %% @doc Insert the data associated with the key in the specified cache
@@ -24,7 +23,7 @@ new(CacheName) ->
 -spec insert(CacheName::atom(), Key::binary(), Data::binary()) -> true.
 
 insert(CacheName, Key, Data) ->
-    Entry = #image_cache_entry{
+    Entry = #cache_entry{
         key=Key, 
         data=Data, 
         created_at=os:timestamp()
@@ -42,7 +41,7 @@ lookup(CacheName, Key) ->
             % @todo Update miss counter here via async call to stats collector
             error_logger:info_msg("~p miss ~s~n", [CacheName, keygen:to_hex(Key)]),
             undefined;
-        [#image_cache_entry{data=Data, created_at=CreatedAt}] -> 
+        [#cache_entry{data=Data, created_at=CreatedAt}] -> 
             % @todo Update hit counter here via async call to stats collector
             error_logger:info_msg("~p hit ~s (~1024p)~n", [CacheName, keygen:to_hex(Key), CreatedAt]),
             Data
