@@ -2,7 +2,7 @@
 
 Image renderer and cacher in Erlang.
 
-IMPORTANT: This appliaction is still a work in progress!
+IMPORTANT: This application is still a work in progress!
 
 Quick usage guide
 =================
