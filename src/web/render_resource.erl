@@ -168,10 +168,12 @@ parse_option({"width", V}, {Rec, ErrorList}) ->
     case V of
         "wurfl" -> {Rec#renderReq{width=wurfl}, ErrorList};
         MaybeValue ->
+    	    {ok, MaxWidth} = application:get_env(imagerl, max_width),
             case catch list_to_integer(MaybeValue) of 
                 {'EXIT', _ } -> {Rec, ["Width should be a non-negative integer or 'wurfl'" | ErrorList]};
                 Integer when Integer < 0 ->  {Rec, ["Width may not be negative" | ErrorList]};
-                NonNegInteger -> {Rec#renderReq{width=NonNegInteger}, ErrorList}
+                Integer when Integer > MaxWidth -> {Rec, [lists:flatten(io_lib:format("Width may not be larger than ~B", [MaxWidth])) | ErrorList]};
+                AllowedInteger -> {Rec#renderReq{width=AllowedInteger}, ErrorList}
             end
     end;
 
@@ -179,10 +181,12 @@ parse_option({"height", V}, {Rec, ErrorList}) ->
     case V of
         "wurfl" -> {Rec#renderReq{height=wurfl}, ErrorList};
         MaybeValue ->
+    	    {ok, MaxHeight} = application:get_env(imagerl, max_height),
             case catch list_to_integer(MaybeValue) of 
                 {'EXIT', _ } -> {Rec, ["Height should be a non-negative integer or 'wurfl'" | ErrorList]};
                 Integer when Integer < 0 -> {Rec, ["Height may not be negative" | ErrorList]};
-                NonNegInteger -> {Rec#renderReq{height=NonNegInteger}, ErrorList}
+                Integer when Integer > MaxHeight -> {Rec, [lists:flatten(io_lib:format("Height may not be larger than ~B", [MaxHeight])) | ErrorList]};
+                AllowedInteger -> {Rec#renderReq{height=AllowedInteger}, ErrorList}
             end
     end;
 

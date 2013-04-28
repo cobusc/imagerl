@@ -32,7 +32,7 @@ rewrite_wurfl_values(Req) ->
     Key = keygen:wurfl_ua_key(Req#renderReq.userAgent),
 
     % @todo Code below needs refactoring
-    {Width, Height} = 
+    {WurflWidth, WurflHeight} = 
     case imagerl_cache:lookup(?WURFL_CACHE, Key) of
         undefined ->
 	    % Try to obtain WURFL values, with fallback strategy if it fails
@@ -46,6 +46,11 @@ rewrite_wurfl_values(Req) ->
         CachedValue ->
             CachedValue
     end,
+
+    {ok, MaxWidth} = application:get_env(imagerl, max_width),
+    {ok, MaxHeight} = application:get_env(imagerl, max_height),
+
+    {Width, Height} = {min(WurflWidth,MaxWidth), min(WurflHeight, MaxHeight)},
 
     WidthSubstitutedReq =
     case Req#renderReq.width of
