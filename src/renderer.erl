@@ -10,7 +10,11 @@ wurfl_lookup(UserAgent, WurflPath) ->
                         [WurflPath, mochiweb_util:quote_plus(UserAgent)]),
 
     error_logger:info_msg("Calling '~s'", [Url]),
-    {ok, JsonResponse} = httpc:request(lists:flatten(Url)),
+
+    StringUrl = lists:flatten(Url),
+    Headers = [],
+    {ok, HttpGetOptions} = application:get_env(imagerl, http_get_options),
+    {ok,{{_,200,"OK"}, _Headers, JsonResponse}} = httpc:request(get, {StringUrl, Headers}, HttpGetOptions, []),
 
     % {"apiVersion":"2.1.2",
     %  "useragent":"Mozilla\/5.0",
@@ -33,7 +37,7 @@ rewrite_wurfl_values(Req) ->
 
     % @todo Code below needs refactoring
     {WurflWidth, WurflHeight} = 
-    case imagerl_cache:lookup(?WURFL_CACHE, Key) of
+    case maybe_use_cache(?WURFL_CACHE, Key, Req#renderReq.noCache) of
         undefined ->
 	    % Try to obtain WURFL values, with fallback strategy if it fails
 	    case catch wurfl_lookup(Req#renderReq.userAgent, "http://localhost/") of
@@ -82,15 +86,17 @@ get_command_params(W,H) ->
     io_lib:format("-thumbnail '~Bx~B!'", [W, H]).
 
 
-
 %% @todo Refactor
 compute_from_source(Req) ->
     Key = keygen:source_image_key(Req#renderReq.url),
     SourceImage =
-    case imagerl_cache:lookup(?IMAGE_CACHE, Key) of
+    case maybe_use_cache(?IMAGE_CACHE, Key, Req#renderReq.noCache) of
         undefined ->
             % @todo Have to build in connect timeout and connection timeout here.
-            {ok,{{_,200,"OK"}, _Headers, Body}} = httpc:request(binary_to_list(Req#renderReq.url)),
+            StringUrl = binary_to_list(Req#renderReq.url),
+            Headers = [],
+            {ok, HttpGetOptions} = application:get_env(imagerl, http_get_options),
+            {ok,{{_,200,"OK"}, _Headers, Body}} = httpc:request(get, {StringUrl, Headers}, HttpGetOptions, []),
             imagerl_cache:insert(?IMAGE_CACHE, Key, Body),
             Body;
         CachedValue ->
@@ -119,7 +125,7 @@ render(#renderReq{height=wurfl}=Req) ->
 render(RenderReq) ->
     Key = keygen:rendered_image_key(RenderReq),
     Data =
-    case imagerl_cache:lookup(?IMAGE_CACHE, Key) of
+    case maybe_use_cache(?IMAGE_CACHE, Key, RenderReq#renderReq.noCache) of
         undefined ->
             {ok, ComputedValue} = compute_from_source(RenderReq),
             imagerl_cache:insert(?IMAGE_CACHE, Key, ComputedValue),
@@ -130,4 +136,13 @@ render(RenderReq) ->
     {ok, Data}.
 
 
+-spec maybe_use_cache(CacheName::atom(), Key::binary(), BypassCache::boolean()) -> undefined | binary().
+
+maybe_use_cache(CacheName, Key, BypassCache) ->
+    case BypassCache of
+        true -> 
+            undefined;
+        false ->
+            imagerl_cache:lookup(CacheName, Key)
+    end.
 

@@ -67,6 +67,11 @@ http://localhost:8000/ui
 Notes to self...
 ================
 
+Check out
+```
+http://www.imagemagick.org/Usage/annotating/
+```
+
 Some notes from the Imagick website relating to geometry specifications...
 
 <table>
