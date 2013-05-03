@@ -54,7 +54,11 @@ init([]) ->
     Web = {webmachine_mochiweb,
            {webmachine_mochiweb, start, [WebConfig]},
            permanent, 5000, worker, [mochiweb_socket_server]},
-    Processes = [Web],
+
+    MemSup = {memsup,
+              {memsup, start_link, []},
+               permanent, 5000, supervisor, []},
+    Processes = [Web, MemSup],
 
     % Cache creation
     true = imagerl_cache:new(?IMAGE_CACHE),
