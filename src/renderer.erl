@@ -1,4 +1,5 @@
-%% @doc The renderer modile.
+%%
+%% @doc The renderer module.
 %%
 -module(renderer).
 -export([wurfl_lookup/2,
@@ -12,9 +13,11 @@ wurfl_lookup(UserAgent, WurflPath) ->
     error_logger:info_msg("Calling '~s'", [Url]),
 
     StringUrl = lists:flatten(Url),
-    Headers = [],
-    {ok, HttpGetOptions} = application:get_env(imagerl, http_get_options),
-    {ok,{{_,200,"OK"}, _Headers, JsonResponse}} = httpc:request(get, {StringUrl, Headers}, HttpGetOptions, []),
+%    Headers = [],
+%    {ok, HttpGetOptions} = application:get_env(imagerl, http_get_options),
+%    {ok,{{_,200,"OK"}, _Headers, JsonResponse}} = httpc:request(get, {StringUrl, Headers}, HttpGetOptions, []),
+
+    {ok, JsonResponse} = fetch:url(StringUrl),
 
     % {"apiVersion":"2.1.2",
     %  "useragent":"Mozilla\/5.0",
@@ -94,9 +97,10 @@ compute_from_source(Req) ->
         undefined ->
             % @todo Have to build in connect timeout and connection timeout here.
             StringUrl = binary_to_list(Req#renderReq.url),
-            Headers = [],
-            {ok, HttpGetOptions} = application:get_env(imagerl, http_get_options),
-            {ok,{{_,200,"OK"}, _Headers, Body}} = httpc:request(get, {StringUrl, Headers}, HttpGetOptions, []),
+            %Headers = [],
+            %{ok, HttpGetOptions} = application:get_env(imagerl, http_get_options),
+            %{ok,{{_,200,"OK"}, _Headers, Body}} = httpc:request(get, {StringUrl, Headers}, HttpGetOptions, []),
+            {ok, Body} = fetch:url(StringUrl),
             imagerl_cache:insert(?IMAGE_CACHE, Key, Body),
             Body;
         CachedValue ->
