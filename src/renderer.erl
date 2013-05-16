@@ -10,7 +10,7 @@ wurfl_lookup(UserAgent, WurflPath) ->
     Url = io_lib:format("~s?ua=~s&search=max_image_width|max_image_height&format=json",
                         [WurflPath, mochiweb_util:quote_plus(UserAgent)]),
 
-    error_logger:info_msg("Calling '~s'", [Url]),
+    %error_logger:info_msg("Calling '~s'", [Url]),
 
     StringUrl = lists:flatten(Url),
 %    Headers = [],
