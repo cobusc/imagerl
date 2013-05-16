@@ -39,11 +39,11 @@ lookup(CacheName, Key) ->
     case ets:lookup(CacheName, Key) of
         [] -> 
             % @todo Update miss counter here via async call to stats collector
-            error_logger:info_msg("~p miss ~s~n", [CacheName, keygen:to_hex(Key)]),
+            %error_logger:info_msg("~p miss ~s~n", [CacheName, keygen:to_hex(Key)]),
             undefined;
         [#cache_entry{data=Data, created_at=CreatedAt}] -> 
             % @todo Update hit counter here via async call to stats collector
-            error_logger:info_msg("~p hit ~s (~1024p)~n", [CacheName, keygen:to_hex(Key), CreatedAt]),
+            %error_logger:info_msg("~p hit ~s (~1024p)~n", [CacheName, keygen:to_hex(Key), CreatedAt]),
             Data
     end.
 
