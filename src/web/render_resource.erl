@@ -5,6 +5,7 @@
          allowed_methods/2, 
          malformed_request/2,
          is_authorized/2,
+         generate_etag/2,
          forbidden/2
         ]).
 
@@ -82,6 +83,17 @@ malformed_request(ReqData, Ctx) ->
             ReqData2 = wrq:set_resp_body(ErrorList, ReqData),
             {true, ReqData2, Ctx}
     end.
+
+%%
+%% @doc Genetate etag
+%%
+-spec generate_etag(ReqData::#wm_reqdata{}, RenderReq::#renderReq{}) ->
+    {Etag::iolist()|undefined, NewReqData::#wm_reqdata{}, RenderReq::#renderReq{}}.
+
+generate_etag(ReqData, RenderReq) ->
+    Key = keygen:rendered_image_key(RenderReq),
+    Etag = keygen:to_hex(Key),
+    {Etag, ReqData, RenderReq}.
 
 %%
 %% @doc Response formatting in XXX format.
