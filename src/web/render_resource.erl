@@ -57,7 +57,7 @@ content_types_provided(ReqData, Context) ->
     {list(http_method()), NewReqData::#wm_reqdata{}, NewContext::any()}.
     
 allowed_methods(ReqData, Context) ->
-    {['GET'], ReqData, Context}.
+    {['GET', 'HEAD'], ReqData, Context}.
 
 %%
 %% @doc Check if the request parameters are correct and complete
