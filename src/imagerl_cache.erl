@@ -61,6 +61,7 @@ delete(CacheName, Key) ->
 -spec stats(CacheName::atom()) -> list({Key::atom(), Value::any()}).
 
 stats(CacheName) ->
+    WordSize = erlang:system_info(wordsize),
     Info = ets:info(CacheName),
     Filter = fun({K,_}) ->
         case K of
@@ -71,7 +72,13 @@ stats(CacheName) ->
         end
     end,
     FilteredInfo = lists:filter(Filter, Info),
+    Mapper = fun({K,V}) ->
+        case K of
+            memory -> {K, V * WordSize}; % Convert memory value from words to bytes.
+            _ -> {K, V}
+        end
+    end,
+    TransformedInfo = lists:map(Mapper, FilteredInfo),
     % @todo Amend with hit/miss stats
-    % @todo Convert memory from words to bytes by multiplying with erlang:system_info(wordsize)
-    FilteredInfo.
+    TransformedInfo.
 
