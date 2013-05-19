@@ -91,20 +91,24 @@ get_command_params(W,H) ->
 
 %% @todo Refactor
 compute_from_source(Req) ->
-    Key = keygen:source_image_key(Req#renderReq.url),
+    {ok, SourceImageCachingEnabled} = application:get_env(imagerl, source_image_caching_enabled),
+    StringUrl = binary_to_list(Req#renderReq.url),
+
     SourceImage =
-    case maybe_use_cache(?IMAGE_CACHE, Key, Req#renderReq.noCache) of
-        undefined ->
-            % @todo Have to build in connect timeout and connection timeout here.
-            StringUrl = binary_to_list(Req#renderReq.url),
-            %Headers = [],
-            %{ok, HttpGetOptions} = application:get_env(imagerl, http_get_options),
-            %{ok,{{_,200,"OK"}, _Headers, Body}} = httpc:request(get, {StringUrl, Headers}, HttpGetOptions, []),
+    case SourceImageCachingEnabled of
+        false ->
             {ok, Body} = fetch:url(StringUrl),
-            imagerl_cache:insert(?IMAGE_CACHE, Key, Body),
             Body;
-        CachedValue ->
-            CachedValue
+        true ->
+            Key = keygen:source_image_key(Req#renderReq.url),
+            case maybe_use_cache(?IMAGE_CACHE, Key, Req#renderReq.noCache) of
+                undefined ->
+                    {ok, Body} = fetch:url(StringUrl),
+                    imagerl_cache:insert(?IMAGE_CACHE, Key, Body),
+                    Body;
+                CachedValue ->
+                    CachedValue
+            end
     end,
 
     %% @todo Obviously this is highly inefficient. Will be optimised.    
