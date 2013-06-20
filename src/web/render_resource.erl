@@ -70,15 +70,9 @@ malformed_request(ReqData, Ctx) ->
     %% url width heigth nocache format debug annotation ua/HTTP_USER_AGENT
 
     case create_renderReq(QueryArgs) of
-        {ok, RenderReq} ->
-            Req = 
-            case wrq:get_req_header("User-Agent", ReqData) of
-                undefined -> RenderReq;
-                UA -> 
-                    % io:format("UserAgent implicitly set to '~s'~n", [UA]),
-                    RenderReq#renderReq{userAgent=list_to_binary(UA)}
-            end,
-            {false, ReqData, Req};
+        {ok, R} ->
+            RenderReq = maybe_set_user_agent(ReqData, R),
+            {false, ReqData, RenderReq};
         {error, ErrorList} ->
             ReqData2 = wrq:set_resp_body(ErrorList, ReqData),
             {true, ReqData2, Ctx}
@@ -110,6 +104,34 @@ to_png(ReqData, RenderReq) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                            Helper functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%
+%% @doc Try to extract user agent from various headers
+%%
+-spec maybe_set_user_agent(ReqData::#wm_reqdata{}, RenderReq::#renderReq{}) -> #renderReq{}.
+
+maybe_set_user_agent(ReqData, RenderReq) ->
+    % Only set user agent if it was not specified
+    case RenderReq#renderReq.userAgent of
+        undefined ->
+            Headers = ["X-Device-User-Agent", "User-Agent"],
+            RenderReq#renderReq{userAgent=get_first_header_value(ReqData, Headers)};
+        _ ->
+            RenderReq
+    end.
+
+
+get_first_header_value(_ReqData, []) ->
+    undefined;
+get_first_header_value(ReqData, [H|Rest]) ->
+    case wrq:get_req_header(H, ReqData) of
+        undefined ->
+            get_first_header_value(ReqData, Rest);
+        Value ->
+            list_to_binary(Value)
+    end.
+
+
 
 %%
 %% @doc Build a #renderReq record from the specified Args
