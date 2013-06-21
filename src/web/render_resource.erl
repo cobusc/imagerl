@@ -73,7 +73,16 @@ malformed_request(ReqData, Ctx) ->
         {ok, R} ->
             RR = maybe_set_user_agent(ReqData, R),
             RenderReq = maybe_rewrite_wurfl_values(RR),
-            {false, ReqData, RenderReq};
+            ReqData2 = 
+            case RenderReq of
+                RR -> % Url static, so client can cache the result.
+                    ReqData;
+                _ -> %  Url dynamic, so client may not cache the result.
+                    RD1 = wrq:set_resp_header("Cache-Control", "no-cache, must-revalidate", ReqData),
+                    RD2 = wrq:set_resp_header("Pragma", "no-cache", RD1),
+                    wrq:set_resp_header("Expires", "-1", RD2)
+            end,
+            {false, ReqData2, RenderReq};
         {error, ErrorList} ->
             ReqData2 = wrq:set_resp_body(ErrorList, ReqData),
             {true, ReqData2, Ctx}
