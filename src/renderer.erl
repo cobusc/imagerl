@@ -2,37 +2,48 @@
 %% @doc The renderer module.
 %%
 -module(renderer).
--export([wurfl_lookup/2,
+-export([wurfl_lookup/1,
+         rewrite_wurfl_values/1,
          render/1]).
 -include("imagerl.hrl").
 
-wurfl_lookup(UserAgent, WurflPath) ->
-    Url = io_lib:format("~s?ua=~s&search=max_image_width|max_image_height&format=json",
-                        [WurflPath, mochiweb_util:quote_plus(UserAgent)]),
+wurfl_lookup(UserAgent) ->
+    % WURFL Cloud request format
+    Url = "http://340259:vj3aXWBUfkzryTgP4mZY0qK5RGNMcDl2@api.wurflcloud.com/v1/json/search:(max_image_width,max_image_height)",
+
+%   WURFL webservice.php query format 
+%    Url = io_lib:format("~s?ua=~s&search=max_image_width|max_image_height&format=json",
+%                        [WurflPath, mochiweb_util:quote_plus(UserAgent)]),
 
     %error_logger:info_msg("Calling '~s'", [Url]),
 
     StringUrl = lists:flatten(Url),
-%    Headers = [],
-%    {ok, HttpGetOptions} = application:get_env(imagerl, http_get_options),
-%    {ok,{{_,200,"OK"}, _Headers, JsonResponse}} = httpc:request(get, {StringUrl, Headers}, HttpGetOptions, []),
+    Headers = [{"User-Agent", binary_to_list(UserAgent)}],
+    {ok, HttpGetOptions} = application:get_env(imagerl, http_get_options),
+    try
+        {ok,{{_,200,"OK"}, _Headers, JsonResponse}} = httpc:request(get, {StringUrl, Headers}, HttpGetOptions, []),
 
-    {ok, JsonResponse} = fetch:url(StringUrl),
+%    {ok, JsonResponse} = fetch:url(StringUrl),
 
-    % {"apiVersion":"2.1.2",
-    %  "useragent":"Mozilla\/5.0",
-    %  "id":"mozilla_ver5",
-    %  "capabilities":{"max_image_width":600,
-    %                  "max_image_height":600},
-    %  "errors":[]
-    %  }
+    % {"apiVersion": "WurflCloud 1.5.0",
+    %  "mtime": 1369720128,
+    %  "id": "samsung_sgh_e250i_ver1",
+    %  "capabilities": {"max_image_width": 120,
+    %                   "max_image_height": 130},
+    %   "errors": {}
+    % }
 
-    Response = mochijson2:decode(JsonResponse),
-    {<<"capabilities">>, Capabilities} = proplists:lookup(<<"capabilities">>, Response),
-    {<<"max_image_width">>, W} = proplists:lookup(<<"max_image_width">>, Capabilities),
-    {<<"max_image_height">>, H} = proplists:lookup(<<"max_image_height">>, Capabilities),
+        io:format("JSON response: ~p~n", [JsonResponse]),
+        {struct, Info} = mochijson2:decode(JsonResponse),
+        {<<"capabilities">>, {struct, Capabilities}} = proplists:lookup(<<"capabilities">>, Info),
+        {<<"max_image_width">>, W} = proplists:lookup(<<"max_image_width">>, Capabilities),
+        {<<"max_image_height">>, H} = proplists:lookup(<<"max_image_height">>, Capabilities),
 
-    {ok, {W,H}}.
+        {ok, {W,H}}
+    catch
+        Error ->
+            {error, Error}
+    end.
 
 
 rewrite_wurfl_values(Req) ->
@@ -43,7 +54,7 @@ rewrite_wurfl_values(Req) ->
     case maybe_use_cache(?WURFL_CACHE, Key, Req#renderReq.noCache) of
         undefined ->
 	    % Try to obtain WURFL values, with fallback strategy if it fails
-	    case catch wurfl_lookup(Req#renderReq.userAgent, "http://localhost/") of
+	    case wurfl_lookup(Req#renderReq.userAgent) of
 		{ok, Result} ->
                     imagerl_cache:insert(?WURFL_CACHE, Key, Result),
 		    Result;
@@ -124,13 +135,14 @@ compute_from_source(Req) ->
     {ok, Result}.
 
 
-render(#renderReq{width=wurfl}=Req) ->
-    NewReq = rewrite_wurfl_values(Req),
-    render(NewReq);
-render(#renderReq{height=wurfl}=Req) ->
-    NewReq = rewrite_wurfl_values(Req),
-    render(NewReq);
+%render(#renderReq{width=wurfl}=Req) ->
+%    NewReq = rewrite_wurfl_values(Req),
+%    render(NewReq);
+%render(#renderReq{height=wurfl}=Req) ->
+%    NewReq = rewrite_wurfl_values(Req),
+%    render(NewReq);
 render(RenderReq) ->
+    io:format("Request: ~p~n", [RenderReq]),
     Key = keygen:rendered_image_key(RenderReq),
     Data =
     case maybe_use_cache(?IMAGE_CACHE, Key, RenderReq#renderReq.noCache) of

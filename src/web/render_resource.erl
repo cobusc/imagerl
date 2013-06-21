@@ -71,7 +71,8 @@ malformed_request(ReqData, Ctx) ->
 
     case create_renderReq(QueryArgs) of
         {ok, R} ->
-            RenderReq = maybe_set_user_agent(ReqData, R),
+            RR = maybe_set_user_agent(ReqData, R),
+            RenderReq = maybe_rewrite_wurfl_values(RR),
             {false, ReqData, RenderReq};
         {error, ErrorList} ->
             ReqData2 = wrq:set_resp_body(ErrorList, ReqData),
@@ -131,6 +132,13 @@ get_first_header_value(ReqData, [H|Rest]) ->
             list_to_binary(Value)
     end.
 
+
+maybe_rewrite_wurfl_values(#renderReq{width=wurfl}=R) ->
+    renderer:rewrite_wurfl_values(R);
+maybe_rewrite_wurfl_values(#renderReq{height=wurfl}=R) ->
+    renderer:rewrite_wurfl_values(R);
+maybe_rewrite_wurfl_values(#renderReq{}=R) ->
+    R.
 
 
 %%
