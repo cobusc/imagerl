@@ -1,5 +1,8 @@
 .eunit
 deps
+ebin
 *.o
 *.beam
 *.plt
+tags
+log
