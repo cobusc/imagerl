@@ -71,16 +71,14 @@ malformed_request(ReqData, Ctx) ->
 
     case create_renderReq(QueryArgs) of
         {ok, R} ->
-            RR = maybe_set_user_agent(ReqData, R),
-            RenderReq = maybe_rewrite_wurfl_values(RR),
+            RR = utils:maybe_set_user_agent(wrq:req_headers(ReqData), R),
+            RenderReq = utils:maybe_rewrite_wurfl_values(RR),
             ReqData2 = 
             case RenderReq of
                 RR -> % Url static, so client can cache the result.
                     ReqData;
                 _ -> %  Url dynamic, so client may not cache the result.
-                    RD1 = wrq:set_resp_header("Cache-Control", "no-cache, must-revalidate", ReqData),
-                    RD2 = wrq:set_resp_header("Pragma", "no-cache", RD1),
-                    wrq:set_resp_header("Expires", "-1", RD2)
+                    utils:set_nocache_headers(ReqData)
             end,
             {false, ReqData2, RenderReq};
         {error, ErrorList} ->
@@ -114,41 +112,6 @@ to_png(ReqData, RenderReq) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                            Helper functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%
-%% @doc Try to extract user agent from various headers
-%%
--spec maybe_set_user_agent(ReqData::#wm_reqdata{}, RenderReq::#renderReq{}) -> #renderReq{}.
-
-maybe_set_user_agent(ReqData, RenderReq) ->
-    % Only set user agent if it was not specified
-    case RenderReq#renderReq.userAgent of
-        undefined ->
-            Headers = ["X-Device-User-Agent", "User-Agent"],
-            RenderReq#renderReq{userAgent=get_first_header_value(ReqData, Headers)};
-        _ ->
-            RenderReq
-    end.
-
-
-get_first_header_value(_ReqData, []) ->
-    undefined;
-get_first_header_value(ReqData, [H|Rest]) ->
-    case wrq:get_req_header(H, ReqData) of
-        undefined ->
-            get_first_header_value(ReqData, Rest);
-        Value ->
-            list_to_binary(Value)
-    end.
-
-
-maybe_rewrite_wurfl_values(#renderReq{width=wurfl}=R) ->
-    renderer:rewrite_wurfl_values(R);
-maybe_rewrite_wurfl_values(#renderReq{height=wurfl}=R) ->
-    renderer:rewrite_wurfl_values(R);
-maybe_rewrite_wurfl_values(#renderReq{}=R) ->
-    R.
-
 
 %%
 %% @doc Build a #renderReq record from the specified Args
