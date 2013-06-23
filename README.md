@@ -1,8 +1,6 @@
 # imagerl [![Build Status](https://travis-ci.org/cobusc/imagerl.png?branch=master)](https://travis-ci.org/cobusc/imagerl)
 
-Image renderer and cacher in Erlang.
-
-IMPORTANT: This application is still a work in progress!
+Image renderer and cacher in Erlang, with WURFL Cloud support.
 
 Quick usage guide
 =================
@@ -27,18 +25,13 @@ http://localhost:8000/render?url=http%3A%2F%2Fwww.google.co.za%2Fimages%2Fsrpr%2
 ```
 The aspect ratio will be preserved in this case.
 
+The `width` or `height` values may be set to `wurfl`, in which case a WURFL lookup will be performed using the specified `ua` argument, or the detected device.
+
 Resize an image to specific dimensions
 --------------------------------------
 If you need to resize the image to specific dimensions, specify BOTH the width and the height:
 ```
 http://localhost:8000/render?url=http%3A%2F%2Fwww.google.co.za%2Fimages%2Fsrpr%2Flogo3w.png&width=100&height=100
-```
-
-Change the format of image
---------------------------
-The image format that is served can be specified. For instance, if one wants the previous example to be served as a JPG file, you simply add a "format=<type>" part to the query.
-```
-http://localhost:8000/render?url=http%3A%2F%2Fwww.google.co.za%2Fimages%2Fsrpr%2Flogo3w.png&width=100&height=100&format=jpg
 ```
 
 Annotate the image with text
