@@ -2,7 +2,7 @@
 -export([maybe_set_user_agent/2,
          get_first_header_value/2,
          maybe_rewrite_wurfl_values/1,
-         set_nocache_headers/1]).
+         maybe_set_nocache_headers/2]).
 -include_lib("webmachine/include/webmachine.hrl").
 -include("imagerl.hrl").
 
@@ -34,7 +34,7 @@ get_first_header_value([H|Rest], AllHeaders) ->
     case mochiweb_headers:lookup(H, AllHeaders) of
         none -> 
             get_first_header_value(Rest, AllHeaders);
-        {value, {H, Value}} ->
+        {value, {_, Value}} ->
             list_to_binary(Value)
     end.
 
@@ -54,11 +54,16 @@ maybe_rewrite_wurfl_values(#renderReq{}=R) ->
         R.
 
 %%
-%% @doc Set the nocache HTTP headers to be returned by WebMachine
+%% @doc Set the nocache HTTP headers to be returned by WebMachine, if the specified condition is true.
 %%
--spec set_nocache_headers(RequestData::#wm_reqdata{}) -> #wm_reqdata{}.
+-spec maybe_set_nocache_headers(Condition::boolean(), RequestData::#wm_reqdata{}) -> #wm_reqdata{}.
 
-set_nocache_headers(RequestData) ->
-    RD1 = wrq:set_resp_header("Cache-Control", "no-cache, must-revalidate", RequestData),
-    RD2 = wrq:set_resp_header("Pragma", "no-cache", RD1),
-    wrq:set_resp_header("Expires", "-1", RD2).
+maybe_set_nocache_headers(Condition, RequestData) ->
+    case Condition of
+        true ->
+            RD1 = wrq:set_resp_header("Cache-Control", "no-cache, must-revalidate", RequestData),
+            RD2 = wrq:set_resp_header("Pragma", "no-cache", RD1),
+            wrq:set_resp_header("Expires", "-1", RD2);
+        false ->
+            RequestData
+    end.

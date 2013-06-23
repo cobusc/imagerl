@@ -73,13 +73,7 @@ malformed_request(ReqData, Ctx) ->
         {ok, R} ->
             RR = utils:maybe_set_user_agent(wrq:req_headers(ReqData), R),
             RenderReq = utils:maybe_rewrite_wurfl_values(RR),
-            ReqData2 = 
-            case RenderReq of
-                RR -> % Url static, so client can cache the result.
-                    ReqData;
-                _ -> %  Url dynamic, so client may not cache the result.
-                    utils:set_nocache_headers(ReqData)
-            end,
+            ReqData2 = utils:maybe_set_nocache_headers(RenderReq =/= RR, ReqData), 
             {false, ReqData2, RenderReq};
         {error, ErrorList} ->
             ReqData2 = wrq:set_resp_body(ErrorList, ReqData),
