@@ -58,7 +58,11 @@ init([]) ->
     MemSup = {memsup,
               {memsup, start_link, []},
                permanent, 5000, supervisor, []},
+
     Processes = [Web, MemSup],
+
+    {ok, Pid} = gen_event:start_link(),
+    ok = gen_event:add_handler(Pid, cache_manager, []),
 
     % Cache creation
     true = imagerl_cache:new(?IMAGE_CACHE),
