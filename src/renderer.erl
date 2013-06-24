@@ -15,8 +15,6 @@ wurfl_lookup(UserAgent) ->
 %    Url = io_lib:format("~s?ua=~s&search=max_image_width|max_image_height&format=json",
 %                        [WurflPath, mochiweb_util:quote_plus(UserAgent)]),
 
-    %error_logger:info_msg("Calling '~s'", [Url]),
-
     StringUrl = lists:flatten(Url),
     Headers = [{"User-Agent", binary_to_list(UserAgent)}],
     {ok, HttpGetOptions} = application:get_env(imagerl, http_get_options),
@@ -33,7 +31,7 @@ wurfl_lookup(UserAgent) ->
     %   "errors": {}
     % }
 
-        io:format("JSON response: ~p~n", [JsonResponse]),
+%        io:format("JSON response: ~p~n", [JsonResponse]),
         {struct, Info} = mochijson2:decode(JsonResponse),
         {<<"capabilities">>, {struct, Capabilities}} = proplists:lookup(<<"capabilities">>, Info),
         {<<"max_image_width">>, W} = proplists:lookup(<<"max_image_width">>, Capabilities),
@@ -97,10 +95,9 @@ get_command_params(W,0) ->
     io_lib:format("-thumbnail ~B", [W]);
 get_command_params(W,H) ->
     % Aspect ratio not preserved, since width and height are specified.
-    io_lib:format("-thumbnail '~Bx~B!'", [W, H]).
+    io_lib:format("-thumbnail ~Bx~B!", [W, H]).
 
 
-%% @todo Refactor
 compute_from_source(Req) ->
     {ok, SourceImageCachingEnabled} = application:get_env(imagerl, source_image_caching_enabled),
     StringUrl = binary_to_list(Req#renderReq.url),
@@ -122,27 +119,46 @@ compute_from_source(Req) ->
             end
     end,
 
-    %% @todo Obviously this is highly inefficient. Will be optimised.    
-    InTmpName = test_server:temp_name("/tmp/imagerl.in."),
-    OutTmpName = test_server:temp_name("/tmp/imagerl.out."),
-    ok = file:write_file(InTmpName, SourceImage),
-    Cmd = io_lib:format("convert ~s ~s ~s", 
-                        [InTmpName, get_command_params(Req), OutTmpName]),
-    os:cmd(Cmd),
-    {ok, Result} = file:read_file(OutTmpName),
-    ok = file:delete(InTmpName),
-    ok = file:delete(OutTmpName),
-    {ok, Result}.
+    % Image processing via stdin/stdout to the /usr/bin/convert command
+    Command = lists:flatten(io_lib:format("/usr/bin/convert - ~s -", [get_command_params(Req)])),
+    Executable = get_base_dir(?MODULE) ++ "/priv/stdin_forcer",
+    P = open_port({spawn_executable, Executable},
+                  [stream, use_stdio, stderr_to_stdout, binary, eof,
+                  {args, string:tokens(Command, " ")}]),
+    L = erlang:size(SourceImage),
+    true = port_command(P, <<L:32/integer>>),
+    true = port_command(P, SourceImage),
+    Response = gather_response(P),
+    true = port_close(P),
+
+    {ok, Response}.
+  
+
+get_base_dir(Module) ->
+  {file, Here} = code:is_loaded(Module),
+  filename:dirname(filename:dirname(Here)).
 
 
-%render(#renderReq{width=wurfl}=Req) ->
-%    NewReq = rewrite_wurfl_values(Req),
-%    render(NewReq);
-%render(#renderReq{height=wurfl}=Req) ->
-%    NewReq = rewrite_wurfl_values(Req),
-%    render(NewReq);
-render(RenderReq) ->
-    io:format("Request: ~p~n", [RenderReq]),
+gather_response(Port) ->
+    gather_response(Port, []).
+gather_response(Port, Accum) ->
+    receive
+        {Port, {data, Bin}} -> gather_response(Port, [Bin | Accum]);
+        {Port, eof} -> list_to_binary(lists:reverse(Accum))
+    after % max 30 seconds of time for the process to send EOF (close stdout)
+        30000 -> died
+    end.
+
+%%
+%% @doc Render an image according to the request
+%%
+%% Note: The width and height fields may not be 'wurfl'. It should already have been transformed at this stage.
+%%
+-spec render(RenderReq::#renderReq{}) -> {ok, Data::binary()}.
+
+render(#renderReq{width=Width, height=Height} = RenderReq)
+when is_integer(Width), Width >=0,
+     is_integer(Height), Height >= 0 ->
     Key = keygen:rendered_image_key(RenderReq),
     Data =
     case maybe_use_cache(?IMAGE_CACHE, Key, RenderReq#renderReq.noCache) of

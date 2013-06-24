@@ -1,6 +1,6 @@
 # imagerl [![Build Status](https://travis-ci.org/cobusc/imagerl.png?branch=master)](https://travis-ci.org/cobusc/imagerl)
 
-Image renderer and cacher in Erlang, with WURFL Cloud support.
+Image renderer and cacher in Erlang, with WURFL Cloud support. Image convertion is done using the `convert` utility provided by ImageMagick.
 
 Quick usage guide
 =================
@@ -12,6 +12,8 @@ If the image is located at "http://www.google.co.za/images/srpr/logo3w.png", mak
 http://localhost:8000/render?url=http%3A%2F%2Fwww.google.co.za%2Fimages%2Fsrpr%2Flogo3w.png
 ```
 The image will be retrieved, cached and served the first time it is request. Thereafter it will simply be served from the cache.
+
+Local files can be served using the "file://" scheme. Source image caching can be disabled in the config file if necessary.
 
 Restrict the width or height
 ----------------------------
@@ -25,7 +27,7 @@ http://localhost:8000/render?url=http%3A%2F%2Fwww.google.co.za%2Fimages%2Fsrpr%2
 ```
 The aspect ratio will be preserved in this case.
 
-The `width` or `height` values may be set to `wurfl`, in which case a WURFL lookup will be performed using the specified `ua` argument, or the detected device.
+The `width` or `height` values may be set to `wurfl`, in which case a WURFL lookup will be performed using the specified `ua` argument, or the detected device. Opera Mini's custom user agent header is supported.
 
 Resize an image to specific dimensions
 --------------------------------------
@@ -81,24 +83,4 @@ Some notes from the Imagick website relating to geometry specifications...
     <tr><td>area@</td><td>Resize image to have specified area in pixels. Aspect ratio is preserved.</td></tr>
 </table>
 
-
-The `convert` utility works fine with piped input and output in the shell, for example:
-
-```bash
-cat $some_img_file | convert - -thumbnail '200x600!' - | display
-```
-
-Try to use Implement Erlang port to do the heavy lifting...
-
-```erlang
-{ok, ImageAsBinary} = file:read_file("testimage.jpg"),
-P = open_port({spawn, "/usr/bin/convert - -thumbnail '200x600!' -"}, [stream, binary]).
-true = port_command(P, ImageAsBinary).
-% Read response... {data, ConvertedImageAsBinary}
-receive
-    {data, ConvertedImageAsBinary} -> %do_something 
-end,
-true = port_close(P).
-```
-...unfortunately it is not as easy as that.
 
