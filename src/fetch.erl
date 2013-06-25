@@ -7,8 +7,13 @@
 
 url(Url) ->
     case catch mochiweb_util:urlsplit(Url) of 
-        {"file", _, Path, _, _} ->
+        {"file", _, Path, _, _} -> % "file://<path_to_file>"
             file_handler(Path);
+        {"s3", Bucket, [$/ | Key], _, _} -> % "s3://<bucket>/<key>"
+            {_Expires, Prefix, QueryString} = erlcloud_s3:make_link(300, Bucket, Key),
+            SignedUrl = Prefix ++ QueryString,
+            io:format("Signed URL='~s'~n", [SignedUrl]),
+            default_handler(SignedUrl);
         {_Scheme, _Netloc, _Path, _Query, _Fragment} -> 
             default_handler(Url);
         _ -> {error, invalid_url}

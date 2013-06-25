@@ -1,6 +1,10 @@
 # imagerl [![Build Status](https://travis-ci.org/cobusc/imagerl.png?branch=master)](https://travis-ci.org/cobusc/imagerl)
 
-Image renderer and cacher in Erlang, with WURFL Cloud support. Image convertion is done using the `convert` utility provided by ImageMagick.
+Image renderer and cacher in Erlang. It supports:
+* resizing based on the device size (using WURFL Cloud to perform lookups),
+* image convertion using the `convert` utility provided by ImageMagick,
+* serving of locally hosted images using the `file://<path_to_file>` scheme, and
+* serving of Amazon S3 (privately) hosted images using the `s3://<bucket>/<key>` scheme, which builds the required signed URL.
 
 Quick usage guide
 =================
@@ -13,7 +17,10 @@ http://localhost:8000/render?url=http%3A%2F%2Fwww.google.co.za%2Fimages%2Fsrpr%2
 ```
 The image will be retrieved, cached and served the first time it is request. Thereafter it will simply be served from the cache.
 
-Local files can be served using the "file://" scheme. Source image caching can be disabled in the config file if necessary.
+Note that:
+* Local files can be served using the "file://" scheme. 
+* Files hosted on Amazon S3 can be served using the `s3://` scheme. 
+* Source image caching can be disabled in the config file if necessary.
 
 Restrict the width or height
 ----------------------------
