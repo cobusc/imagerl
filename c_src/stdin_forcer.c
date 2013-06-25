@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
   }
   else {
     /* Original Parent Process */
-    char buf;
+    char buf[4*1024*1024];
     int32_t l = 0;
     int32_t data_length = 0;
     int32_t num_read = 0;
@@ -77,14 +77,17 @@ int main(int argc, char *argv[]) {
     data_length = ntohl(l);
     /* We should catch the child's exit signal if it dies before we send STDIN*/
     while (num_read < data_length) {
-        assert(read(STDIN_FILENO, &buf, 1) > 0);
-        num_read++;
-        unused = write(PARENT_WRITE, &buf, 1);
+        ssize_t n = read(STDIN_FILENO, &buf, 4096);
+        num_read += n;
+        unused = write(PARENT_WRITE, &buf, n);
     }
     close(PARENT_WRITE); /* closing PARENT_WRITE sends EOF to CHILD_READ */
     wait(NULL);          /* Wait for child to exit */
-    while (read(PARENT_READ, &buf, 1) > 0) {
-      unused = write(STDOUT_FILENO, &buf, 1);  /* Vomit forth our output on STDOUT */
+    while (1) {
+      ssize_t n = read(PARENT_READ, &buf, sizeof(buf));
+      if (0 == n)
+          break;
+      unused = write(STDOUT_FILENO, &buf, n);  /* Vomit forth our output on STDOUT */
     }
     close(PARENT_READ);      /* done reading from writepipe */
     exit(EXIT_SUCCESS);      /* This was a triumph */
