@@ -60,7 +60,7 @@
                 var debug = document.getElementById("debug").value;
                 var nocache = document.getElementById("nocache").value;
 
-                var call = "http://localhost:8000/render?url="+encodeURIComponent(url);
+                var call = "/render?url="+encodeURIComponent(url);
                 if (width!="") call += "&width=" + width;
                 if (height!="") call += "&height=" + height;
                 if (annotation!="") call += "&annotation=" + encodeURIComponent(annotation);
@@ -88,7 +88,7 @@
     </head>
     <body>
         <div id="container">
-            <h1 class="header">Imager User Interface</h1>
+            <h1 class="header">Imagerl User Interface</h1>
             <span class="caption">URL: </span><input type="text" id="url"><br />
             <span class="caption">Width: </span><input type="text" id="width"><br />
             <span class="caption">Height: </span><input type="text" id="height"><br />

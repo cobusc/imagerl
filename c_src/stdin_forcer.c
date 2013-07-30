@@ -73,11 +73,12 @@ int main(int argc, char *argv[]) {
     close(CHILD_READ);  /* We aren't the child.  Close its read/write. */
     close(CHILD_WRITE);
 
-    assert(4 == read(STDIN_FILENO, &l, 4));
+    if (4 != read(STDIN_FILENO, &l, 4))
+        exit(EXIT_FAILURE);
     data_length = ntohl(l);
     /* We should catch the child's exit signal if it dies before we send STDIN*/
     while (num_read < data_length) {
-        ssize_t n = read(STDIN_FILENO, &buf, 4096);
+        ssize_t n = read(STDIN_FILENO, &buf, sizeof(buf));
         num_read += n;
         unused = write(PARENT_WRITE, &buf, n);
     }
