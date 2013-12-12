@@ -1,5 +1,5 @@
 language: erlang
 otp_release:
-  - R16B
+  - R16B02
   - R15B02
 script: "make test"
