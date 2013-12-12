@@ -59,14 +59,18 @@ init([]) ->
               {memsup, start_link, []},
                permanent, 5000, supervisor, []},
 
-    Processes = [Web, MemSup],
+    ImageCache = {image_cache,
+                  {imagerl_cache, start_link, [?IMAGE_CACHE]},
+                   permanent, 5000, worker, [imagerl_cache]},
+
+    WurflCache = {wurfl_cache,
+                  {imagerl_cache, start_link, [?WURFL_CACHE]},
+                   permanent, 5000, worker, [imagerl_cache]},
+
+    Processes = [Web, MemSup, ImageCache, WurflCache],
 
     {ok, Pid} = gen_event:start_link(),
     ok = gen_event:add_handler(Pid, cache_manager, []),
-
-    % Cache creation
-    true = imagerl_cache:new(?IMAGE_CACHE),
-    true = imagerl_cache:new(?WURFL_CACHE),
 
     {ok, { {one_for_one, 10, 10}, Processes} }.
 
