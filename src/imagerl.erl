@@ -14,6 +14,7 @@ bootstrap() ->
     ensure_started(public_key),
     ensure_started(ssl),
     ensure_started(mochiweb),
+    ensure_started(estatsd),
     ensure_started(webmachine).
 
 

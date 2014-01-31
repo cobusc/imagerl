@@ -18,6 +18,7 @@ wurfl_lookup(UserAgent) ->
     StringUrl = lists:flatten(Url),
     Headers = [{"User-Agent", binary_to_list(UserAgent)}],
     {ok, HttpGetOptions} = application:get_env(imagerl, http_get_options),
+    StartTime = os:timestamp(),
     try
         {ok,{{_,200,"OK"}, _Headers, JsonResponse}} = httpc:request(get, {StringUrl, Headers}, HttpGetOptions, []),
 
@@ -41,6 +42,8 @@ wurfl_lookup(UserAgent) ->
     catch
         Error ->
             {error, Error}
+    after
+        estatsd:timing("wurfl.lookup", StartTime)
     end.
 
 
@@ -99,6 +102,7 @@ get_command_params(W,H) ->
 
 
 compute_from_source(Req) ->
+    StartTime = os:timestamp(),
     {ok, SourceImageCachingEnabled} = application:get_env(imagerl, source_image_caching_enabled),
     StringUrl = binary_to_list(Req#renderReq.url),
 
@@ -130,7 +134,7 @@ compute_from_source(Req) ->
     true = port_command(P, SourceImage),
     Response = gather_response(P),
     true = port_close(P),
-
+    estatsd:timing("compute.source", StartTime),
     {ok, Response}.
   
 

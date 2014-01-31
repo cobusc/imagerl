@@ -59,7 +59,6 @@ write_debug(Dev, Event, Name) ->
 -spec new(CacheName::atom()) -> boolean().
 
 new(CacheName) ->
-    % @todo Start associated stats collector
     CacheName == ets:new(CacheName, [set, public, named_table, {keypos, #cache_entry.key}]).
 
 %%
@@ -68,11 +67,13 @@ new(CacheName) ->
 -spec insert(CacheName::atom(), Key::binary(), Data::binary()) -> true.
 
 insert(CacheName, Key, Data) ->
+    Name = atom_to_list(CacheName),
     Entry = #cache_entry{
         key=Key, 
         data=Data, 
         created_at=os:timestamp()
     },
+    estatsd:increment(Name++".insert"),
     true = ets:insert(CacheName, Entry).
 
 %%
@@ -81,13 +82,15 @@ insert(CacheName, Key, Data) ->
 -spec lookup(CacheName::atom(), Key::binary()) -> undefined | binary().
 
 lookup(CacheName, Key) ->
+    Name = atom_to_list(CacheName),
     case ets:lookup(CacheName, Key) of
         [] -> 
-            % @todo Update miss counter here via async call to stats collector
-            %error_logger:info_msg("~p miss ~s~n", [CacheName, keygen:to_hex(Key)]),
+            % Update miss counter here via async call to stats collector
+            estatsd:increment(Name++".miss"),
             undefined;
         [#cache_entry{data=Data, created_at=CreatedAt}] -> 
-            % @todo Update hit counter here via async call to stats collector
+            %  Update hit counter here via async call to stats collector
+            estatsd:increment(Name++".hit"),
             %error_logger:info_msg("~p hit ~s (~1024p)~n", [CacheName, keygen:to_hex(Key), CreatedAt]),
             Data
     end.

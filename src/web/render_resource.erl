@@ -100,6 +100,9 @@ generate_etag(ReqData, RenderReq) ->
 to_png(ReqData, RenderReq) ->
     {ok, Data} = renderer:render(RenderReq),
     %% @todo Cater for different types of images
+
+    %% Publish to estatsd
+    estatsd:timing("render", RenderReq#renderReq.created_at),
     {Data, ReqData, RenderReq}.
 
 
@@ -121,7 +124,7 @@ create_renderReq(Args) ->
         {ok, Rec} ->
             % Validate that we have all the arguments
             case is_complete_renderReq(Rec) of
-                true  -> {ok, Rec};
+                true  -> {ok, Rec#renderReq{created_at=os:timestamp()}};
                 false -> {error, ["Missing parameters. Please refer to the documentation."]}
             end;
         {error, _ErrorList} = E -> E

@@ -12,5 +12,6 @@
     format :: string(),
     debug = false :: boolean(),
     annotation :: string(),
-    userAgent :: string()
+    userAgent :: string(),
+    created_at :: erlang:now()
 }).
