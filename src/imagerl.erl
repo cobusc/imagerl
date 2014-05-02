@@ -9,6 +9,7 @@
 
 
 bootstrap() ->
+    ensure_started(asn1),
     ensure_started(inets),
     ensure_started(crypto),
     ensure_started(public_key),

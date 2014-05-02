@@ -14,7 +14,7 @@
 
 source_image_key(Url)
 when is_binary(Url) ->
-    crypto:sha256(Url).
+    crypto:hash(sha256, Url).
 
 %%
 %% @doc Generate an image cache key based on the rendering parameters
@@ -24,7 +24,7 @@ when is_binary(Url) ->
 rendered_image_key(#renderReq{url=U,width=W,height=H,format=F,annotation=A}) ->
 %    HashData = <<$u, U/binary, $w, W/integer, $h, H/integer, $f, F/binary, $a, A/binary>>,
     HashData = io_lib:format("u~sw~Bh~Bf~pa~p", [U, W, H, F, A]),
-    crypto:sha256(HashData).
+    crypto:hash(sha256, HashData).
 
 %%
 %% @doc Generate a WURFL cache key based on the User Agent string
@@ -33,7 +33,7 @@ rendered_image_key(#renderReq{url=U,width=W,height=H,format=F,annotation=A}) ->
 
 wurfl_ua_key(UserAgent)
 when is_binary(UserAgent) ->
-    crypto:sha256(UserAgent).
+    crypto:hash(sha256, UserAgent).
 
 %%
 %% @doc Return the hexadecimal representation of the key
